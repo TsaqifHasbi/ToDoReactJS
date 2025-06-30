@@ -1,9 +1,6 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
-const mysql = require('mysql2/promise');
-require('dotenv').config();
-
 const dbConfig = {
   host: process.env.MYSQL_HOST || process.env.DB_HOST || 'localhost',
   user: process.env.MYSQL_USER || process.env.DB_USER || 'root',
