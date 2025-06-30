@@ -2,19 +2,20 @@ const mysql = require('mysql2/promise');
 require('dotenv').config();
 
 async function createDatabase() {
+  // Railway sudah provide database, jadi kita langsung connect
   const connection = await mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
+    host: process.env.MYSQL_HOST || process.env.DB_HOST || 'localhost',
+    user: process.env.MYSQL_USER || process.env.DB_USER || 'root',
+    password: process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD || '',
+    database: process.env.MYSQL_DATABASE || process.env.DB_NAME || 'railway',
+    port: parseInt(process.env.MYSQL_PORT || process.env.DB_PORT) || 3306,
+    ssl: process.env.NODE_ENV === 'production' ? {
+      rejectUnauthorized: false
+    } : false
   });
 
   try {
-    // Create database if not exists
-    await connection.execute(`CREATE DATABASE IF NOT EXISTS ${process.env.DB_NAME}`);
-    console.log(`✅ Database ${process.env.DB_NAME} created or already exists`);
-    
-    // Use the database
-    await connection.query(`USE ${process.env.DB_NAME}`);
+    console.log(`✅ Connected to Railway MySQL database`);
     
     // Create users table
     const createUsersTable = `
