@@ -5,15 +5,29 @@ import AddTaskForm from './components/AddTaskForm';
 import TaskList from './components/TaskList';
 import ResultSection from './components/ResultSection';
 import Footer from './components/Footer';
+import AuthForm from './components/AuthForm';
+import { authAPI, tasksAPI } from './services/api';
 import './App.css';
 
 function App() {
   const [activeTab, setActiveTab] = useState('My To-Do');
-  const [tasks, setTasks] = useState([
-    { id: 1, text: 'Learn React And Tailwind', completed: false },
-    { id: 2, text: 'Tactical Test', completed: true },
-    { id: 3, text: 'Deploy ke Netlify', completed: false }
-  ]);
+  const [tasks, setTasks] = useState([]);
+  const [user, setUser] = useState(null);
+  const [showAuth, setShowAuth] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    // Check if user is already logged in
+    if (authAPI.isAuthenticated()) {
+      const currentUser = authAPI.getCurrentUser();
+      setUser(currentUser);
+      loadTasks();
+    } else {
+      setShowAuth(true);
+    }
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -39,24 +53,110 @@ function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const addTask = (taskText) => {
-    const newTask = {
-      id: Date.now(),
-      text: taskText,
-      completed: false
-    };
-    setTasks([...tasks, newTask]);
+  const loadTasks = async () => {
+    try {
+      const tasksData = await tasksAPI.getTasks();
+      // Convert API response to frontend format
+      const formattedTasks = tasksData.map(task => ({
+        id: task.id,
+        text: task.title,
+        completed: task.completed
+      }));
+      setTasks(formattedTasks);
+    } catch (error) {
+      console.error('Error loading tasks:', error);
+      setError('Failed to load tasks');
+    }
   };
 
-  const toggleTask = (taskId) => {
-    setTasks(tasks.map(task => 
-      task.id === taskId ? { ...task, completed: !task.completed } : task
-    ));
+  const handleAuth = async (formData) => {
+    setLoading(true);
+    setError('');
+    
+    try {
+      let response;
+      if (isLogin) {
+        response = await authAPI.login({
+          email: formData.email,
+          password: formData.password
+        });
+      } else {
+        response = await authAPI.register(formData);
+      }
+      
+      setUser(response.user);
+      setShowAuth(false);
+      await loadTasks();
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleLogout = () => {
+    authAPI.logout();
+    setUser(null);
+    setTasks([]);
+    setShowAuth(true);
+  };
+
+  const addTask = async (taskText) => {
+    try {
+      const response = await tasksAPI.createTask(taskText);
+      const newTask = {
+        id: response.task.id,
+        text: response.task.title,
+        completed: response.task.completed
+      };
+      setTasks([newTask, ...tasks]);
+    } catch (error) {
+      console.error('Error adding task:', error);
+      setError('Failed to add task');
+    }
+  };
+
+  const toggleTask = async (taskId) => {
+    try {
+      const task = tasks.find(t => t.id === taskId);
+      const response = await tasksAPI.updateTask(taskId, { 
+        completed: !task.completed 
+      });
+      
+      setTasks(tasks.map(task => 
+        task.id === taskId ? { 
+          ...task, 
+          completed: response.task.completed 
+        } : task
+      ));
+    } catch (error) {
+      console.error('Error updating task:', error);
+      setError('Failed to update task');
+    }
+  };
+
+  if (showAuth) {
+    return (
+      <div className="App">
+        <AuthForm
+          isLogin={isLogin}
+          onToggleMode={() => setIsLogin(!isLogin)}
+          onSubmit={handleAuth}
+          loading={loading}
+          error={error}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="App">
-      <Header activeTab={activeTab} onTabChange={setActiveTab} />
+      <Header 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab}
+        user={user}
+        onLogout={handleLogout}
+      />
       <main>
         <WelcomeSection />
         <AddTaskForm onAddTask={addTask} />
@@ -64,6 +164,12 @@ function App() {
         <ResultSection tasks={tasks} />
       </main>
       <Footer />
+      {error && (
+        <div className="error-notification">
+          {error}
+          <button onClick={() => setError('')} className="error-close">x</button>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,0 +1,87 @@
+.user-profile {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 15px 20px;
+  border-radius: 12px;
+  margin: 20px 40px;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.profile-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.avatar {
+  width: 45px;
+  height: 45px;
+  background-color: #fff;
+  color: #3a4a5c;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.user-details {
+  color: white;
+}
+
+.username {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.user-email {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.logout-button {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.logout-button:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .user-profile {
+    margin: 15px 20px;
+    padding: 12px 15px;
+  }
+  
+  .profile-info {
+    gap: 10px;
+  }
+  
+  .username {
+    font-size: 14px;
+  }
+  
+  .user-email {
+    font-size: 12px;
+  }
+  
+  .logout-button {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}
