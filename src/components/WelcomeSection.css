@@ -1,0 +1,145 @@
+.welcome-section {
+  padding: 60px 40px;
+  background-color: #f8f9fa;
+}
+
+.welcome-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 800px;
+  margin: 0 auto;
+  /* gap: 60px; */
+}
+
+.welcome-text {
+  flex: 1;
+}
+
+.welcome-title {
+  font-size: 24px;
+  color: #666;
+  margin: 0 0 10px 0;
+  font-weight: normal;
+}
+
+.main-title {
+  font-size: 48px;
+  font-weight: bold;
+  color: #333;
+  margin: 0 0 20px 0;
+}
+
+.welcome-description {
+  font-size: 16px;
+  color: #666;
+  line-height: 1.5;
+}
+
+.welcome-description p {
+  margin: 0;
+}
+
+.welcome-illustration {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.clipboard {
+  position: relative;
+  width: 280px;
+  height: 350px;
+  background-color: #87ceeb;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.clipboard-header {
+  height: 40px;
+  background-color: #5a9fd4;
+  border-radius: 15px 15px 0 0;
+  position: relative;
+}
+
+.clipboard-header::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 20px;
+  background-color: #4a8bc2;
+  border-radius: 10px;
+}
+
+.clipboard-content {
+  padding: 40px 30px;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  background-color: white;
+  padding: 12px 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.checkbox {
+  width: 20px;
+  height: 20px;
+  background-color: #28a745;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  margin-right: 12px;
+  font-weight: bold;
+}
+
+.task-text {
+  color: #333;
+  font-weight: 500;
+}
+
+.pencil {
+  position: absolute;
+  right: -20px;
+  bottom: 60px;
+  width: 60px;
+  height: 180px;
+  background: linear-gradient(45deg, #ff6b6b 0%, #ff8e8e 50%, #ffd93d 100%);
+  border-radius: 5px 5px 0 0;
+  transform: rotate(25deg);
+}
+
+.pencil::before {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 30px solid transparent;
+  border-right: 30px solid transparent;
+  border-top: 20px solid #333;
+}
+
+.pencil::after {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 15px;
+  background-color: #ff4757;
+  border-radius: 20px;
+}

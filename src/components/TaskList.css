@@ -1,0 +1,91 @@
+.task-list-section {
+  padding: 40px;
+  background-color: #f8f9fa;
+}
+
+.task-list-container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.task-list-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 30px;
+}
+
+.task-list {
+  background-color: #e9ecef;
+  border-radius: 15px;
+  padding: 30px;
+  min-height: 200px;
+}
+
+.no-tasks {
+  text-align: center;
+  color: #999;
+  font-style: italic;
+  padding: 50px 0;
+}
+
+.task-item {
+  margin-bottom: 15px;
+}
+
+.task-item:last-child {
+  margin-bottom: 0;
+}
+
+.task-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 16px;
+  position: relative;
+}
+
+.task-checkbox {
+  opacity: 0;
+  position: absolute;
+  cursor: pointer;
+}
+
+.checkmark {
+  height: 20px;
+  width: 20px;
+  background-color: transparent;
+  border: 2px solid #666;
+  border-radius: 3px;
+  margin-right: 15px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.task-checkbox:checked ~ .checkmark {
+  background-color: #28a745;
+  border-color: #28a745;
+}
+
+.task-checkbox:checked ~ .checkmark:after {
+  content: "";
+  position: absolute;
+  display: block;
+  left: 6px;
+  top: 2px;
+  width: 6px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.task-text {
+  color: #333;
+  transition: all 0.3s ease;
+}
+
+.task-text.completed {
+  text-decoration: line-through;
+  color: #999;
+}
