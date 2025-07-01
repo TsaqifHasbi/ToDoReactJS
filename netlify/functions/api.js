@@ -57,19 +57,13 @@ exports.handler = async (event, context) => {
     console.log('QUERY PARAMS:', event.queryStringParameters);
     console.log('HTTP METHOD:', event.httpMethod);
 
+    // Remove Netlify function prefixes
     path = path.replace('/.netlify/functions/api-simple', '');
     path = path.replace('/.netlify/functions/api', '');
-
-    // Handle /auth paths first
-    if (path.startsWith('/auth/')) {
-      path = path.replace('/auth', '');
-    }
     
-    // Handle /tasks path specifically - keep task ID paths intact
-    if (path === '/tasks') {
-      // Keep as /tasks
-    } else if (path.startsWith('/tasks/')) {
-      // Keep task ID paths as-is (e.g., /tasks/1, /tasks/2)
+    // Remove /auth prefix but keep the path structure
+    if (path.startsWith('/auth')) {
+      path = path.replace('/auth', '');
     }
 
     const method = event.httpMethod;
