@@ -51,21 +51,9 @@ exports.handler = async (event, context) => {
   try {
     // Parse path - handle multiple patterns
     let path = event.path || '';
-    
-    // Log the original path for debugging
-    console.log('ORIGINAL PATH:', event.path);
-    console.log('QUERY PARAMS:', event.queryStringParameters);
-    console.log('HTTP METHOD:', event.httpMethod);
-    
     path = path.replace('/.netlify/functions/api-simple', '');
     path = path.replace('/.netlify/functions/api', '');
-    
-    // Handle /tasks path specifically
-    if (path === '/tasks' || path.endsWith('/tasks')) {
-      path = '/tasks';
-    } else if (path.startsWith('/tasks/')) {
-      // Keep task ID paths as-is
-    } else if (path.startsWith('/auth/')) {
+    if (path.startsWith('/auth/')) {
       path = path.replace('/auth', '');
     }
     
@@ -186,8 +174,6 @@ exports.handler = async (event, context) => {
     // GET TASKS
     if (path === '/tasks' && method === 'GET') {
       const authHeader = event.headers.authorization || event.headers.Authorization;
-      console.log('GET /tasks - Authorization header:', authHeader ? 'Present' : 'Missing');
-      
       if (!authHeader) {
         return {
           statusCode: 401,
@@ -199,10 +185,8 @@ exports.handler = async (event, context) => {
       try {
         const token = authHeader.replace('Bearer ', '');
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret-key');
-        console.log('GET /tasks - Token decoded for user:', decoded.userId);
         
         const userTasks = tasks.filter(t => t.user_id === decoded.userId).sort((a, b) => b.id - a.id);
-        console.log('GET /tasks - Found tasks:', userTasks.length);
         
         return {
           statusCode: 200,
@@ -210,11 +194,10 @@ exports.handler = async (event, context) => {
           body: JSON.stringify(userTasks)
         };
       } catch (error) {
-        console.log('GET /tasks - Token verification failed:', error.message);
         return {
           statusCode: 401,
           headers,
-          body: JSON.stringify({ message: 'Invalid token', error: error.message })
+          body: JSON.stringify({ message: 'Invalid token' })
         };
       }
     }
@@ -222,8 +205,6 @@ exports.handler = async (event, context) => {
     // CREATE TASK
     if (path === '/tasks' && method === 'POST') {
       const authHeader = event.headers.authorization || event.headers.Authorization;
-      console.log('POST /tasks - Authorization header:', authHeader ? 'Present' : 'Missing');
-      
       if (!authHeader) {
         return {
           statusCode: 401,
@@ -235,7 +216,6 @@ exports.handler = async (event, context) => {
       try {
         const token = authHeader.replace('Bearer ', '');
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret-key');
-        console.log('POST /tasks - Token decoded for user:', decoded.userId);
         
         const { title } = body;
         if (!title) {
@@ -247,19 +227,17 @@ exports.handler = async (event, context) => {
         }
 
         const newTask = createTask(decoded.userId, title);
-        console.log('POST /tasks - Created task:', newTask);
         
         return {
           statusCode: 201,
           headers,
-          body: JSON.stringify({ task: newTask })
+          body: JSON.stringify(newTask)
         };
       } catch (error) {
-        console.log('POST /tasks - Token verification failed:', error.message);
         return {
           statusCode: 401,
           headers,
-          body: JSON.stringify({ message: 'Invalid token', error: error.message })
+          body: JSON.stringify({ message: 'Invalid token' })
         };
       }
     }
@@ -297,7 +275,7 @@ exports.handler = async (event, context) => {
         return {
           statusCode: 200,
           headers,
-          body: JSON.stringify({ task: tasks[taskIndex] })
+          body: JSON.stringify(tasks[taskIndex])
         };
       } catch (error) {
         return {
