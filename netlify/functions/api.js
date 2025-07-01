@@ -49,32 +49,10 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    // Parse path - handle multiple patterns
-    let path = event.path || '';
-
-    // Log the original path for debugging
-    console.log('ORIGINAL PATH:', event.path);
-    console.log('QUERY PARAMS:', event.queryStringParameters);
-    console.log('HTTP METHOD:', event.httpMethod);
-
-    // Remove Netlify function prefixes
-    path = path.replace('/.netlify/functions/api-simple', '');
-    path = path.replace('/.netlify/functions/api', '');
-    
-    // Remove /auth prefix but keep the path structure
-    if (path.startsWith('/auth')) {
-      path = path.replace('/auth', '');
-    }
-
+    const path = event.path || '';
     const method = event.httpMethod;
-
-    // Debug info
-    console.log('DEBUG:', {
-      originalPath: event.path,
-      cleanPath: path,
-      method: method,
-      body: event.body
-    });
+    
+    console.log('API Request:', { path, method });
 
     // Parse request body
     let body = {};
@@ -85,13 +63,13 @@ exports.handler = async (event, context) => {
         return {
           statusCode: 400,
           headers,
-          body: JSON.stringify({ message: 'Invalid JSON', error: e.message })
+          body: JSON.stringify({ message: 'Invalid JSON' })
         };
       }
     }
 
-    // REGISTER
-    if ((path === '/register' || path === '/auth/register' || path.endsWith('/register')) && method === 'POST') {
+    // Simple routing based on path ending
+    if ((path.includes('/register') || path.endsWith('register')) && method === 'POST') {
       const { username, email, password } = body;
 
       if (!username || !email || !password) {
@@ -134,11 +112,8 @@ exports.handler = async (event, context) => {
     }
 
     // LOGIN
-    if ((path === '/login' || path === '/auth/login' || path.endsWith('/login')) && method === 'POST') {
+    if ((path.includes('/login') || path.endsWith('login')) && method === 'POST') {
       const { email, password } = body;
-
-      console.log('Login attempt:', { email, passwordProvided: !!password });
-      console.log('Available users:', users.map(u => ({ id: u.id, email: u.email, username: u.username })));
 
       if (!email || !password) {
         return {
@@ -150,29 +125,22 @@ exports.handler = async (event, context) => {
 
       const user = findUserByEmail(email);
       if (!user) {
-        console.log('User not found for email:', email);
         return {
           statusCode: 401,
           headers,
           body: JSON.stringify({ 
-            message: 'Invalid credentials. Please check your email and password or register first.',
-            debug: {
-              availableUsers: users.map(u => u.email),
-              attemptedEmail: email,
-              totalUsers: users.length
-            }
+            message: 'Invalid credentials. Please register first.' 
           })
         };
       }
 
       const isValid = await bcrypt.compare(password, user.password);
-      console.log('Password validation result:', isValid);
       if (!isValid) {
         return {
           statusCode: 401,
           headers,
           body: JSON.stringify({ 
-            message: 'Invalid credentials. Please check your email and password.' 
+            message: 'Invalid credentials.' 
           })
         };
       }
@@ -195,90 +163,8 @@ exports.handler = async (event, context) => {
     }
 
     // GET TASKS
-    if (path === '/tasks' && method === 'GET') {
+    if (path.includes('/tasks') && method === 'GET' && !path.match(/\/tasks\/\d+/)) {
       const authHeader = event.headers.authorization || event.headers.Authorization;
-      console.log('GET /tasks - Authorization header:', authHeader ? 'Present' : 'Missing');
-
-      if (!authHeader) {
-        return {
-          statusCode: 401,
-          headers,
-          body: JSON.stringify({ message: 'No token provided' })
-        };
-      }
-
-      try {
-        const token = authHeader.replace('Bearer ', '');
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret-key');
-        console.log('GET /tasks - Token decoded for user:', decoded.userId);
-
-        const userTasks = tasks.filter(t => t.user_id === decoded.userId).sort((a, b) => b.id - a.id);
-        console.log('GET /tasks - Found tasks:', userTasks.length);
-
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify(userTasks)
-        };
-      } catch (error) {
-        console.log('GET /tasks - Token verification failed:', error.message);
-        return {
-          statusCode: 401,
-          headers,
-          body: JSON.stringify({ message: 'Invalid token', error: error.message })
-        };
-      }
-    }
-
-    // CREATE TASK
-    if (path === '/tasks' && method === 'POST') {
-      const authHeader = event.headers.authorization || event.headers.Authorization;
-      console.log('POST /tasks - Authorization header:', authHeader ? 'Present' : 'Missing');
-
-      if (!authHeader) {
-        return {
-          statusCode: 401,
-          headers,
-          body: JSON.stringify({ message: 'No token provided' })
-        };
-      }
-
-      try {
-        const token = authHeader.replace('Bearer ', '');
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret-key');
-        console.log('POST /tasks - Token decoded for user:', decoded.userId);
-
-        const { title } = body;
-        if (!title) {
-          return {
-            statusCode: 400,
-            headers,
-            body: JSON.stringify({ message: 'Title is required' })
-          };
-        }
-
-        const newTask = createTask(decoded.userId, title);
-        console.log('POST /tasks - Created task:', newTask);
-
-        return {
-          statusCode: 201,
-          headers,
-          body: JSON.stringify({ task: newTask })
-        };
-      } catch (error) {
-        console.log('POST /tasks - Token verification failed:', error.message);
-        return {
-          statusCode: 401,
-          headers,
-          body: JSON.stringify({ message: 'Invalid token', error: error.message })
-        };
-      }
-    }
-
-    // UPDATE TASK
-    if (path.startsWith('/tasks/') && method === 'PUT') {
-      const authHeader = event.headers.authorization || event.headers.Authorization;
-      console.log('PUT /tasks - Authorization header:', authHeader ? 'Present' : 'Missing');
       
       if (!authHeader) {
         return {
@@ -291,49 +177,27 @@ exports.handler = async (event, context) => {
       try {
         const token = authHeader.replace('Bearer ', '');
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret-key');
-        console.log('PUT /tasks - Token decoded for user:', decoded.userId);
 
-        const taskId = parseInt(path.split('/')[2]);
-        console.log('PUT /tasks - Task ID:', taskId);
-        console.log('PUT /tasks - Request body:', body);
-        
-        const { title, completed } = body;
-
-        const taskIndex = tasks.findIndex(t => t.id === taskId && t.user_id === decoded.userId);
-        console.log('PUT /tasks - Task index found:', taskIndex);
-        console.log('PUT /tasks - All tasks:', tasks);
-        
-        if (taskIndex === -1) {
-          return {
-            statusCode: 404,
-            headers,
-            body: JSON.stringify({ message: 'Task not found' })
-          };
-        }
-
-        console.log('PUT /tasks - Before update:', tasks[taskIndex]);
-        if (title !== undefined) tasks[taskIndex].title = title;
-        if (completed !== undefined) tasks[taskIndex].completed = completed;
-        console.log('PUT /tasks - After update:', tasks[taskIndex]);
+        const userTasks = tasks.filter(t => t.user_id === decoded.userId).sort((a, b) => b.id - a.id);
 
         return {
           statusCode: 200,
           headers,
-          body: JSON.stringify({ task: tasks[taskIndex] })
+          body: JSON.stringify(userTasks)
         };
       } catch (error) {
-        console.log('PUT /tasks - Token verification failed:', error.message);
         return {
           statusCode: 401,
           headers,
-          body: JSON.stringify({ message: 'Invalid token', error: error.message })
+          body: JSON.stringify({ message: 'Invalid token' })
         };
       }
     }
 
-    // DELETE TASK
-    if (path.startsWith('/tasks/') && method === 'DELETE') {
+    // CREATE TASK
+    if (path.includes('/tasks') && method === 'POST') {
       const authHeader = event.headers.authorization || event.headers.Authorization;
+      
       if (!authHeader) {
         return {
           statusCode: 401,
@@ -346,7 +210,95 @@ exports.handler = async (event, context) => {
         const token = authHeader.replace('Bearer ', '');
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret-key');
 
-        const taskId = parseInt(path.split('/')[2]);
+        const { title } = body;
+        if (!title) {
+          return {
+            statusCode: 400,
+            headers,
+            body: JSON.stringify({ message: 'Title is required' })
+          };
+        }
+
+        const newTask = createTask(decoded.userId, title);
+
+        return {
+          statusCode: 201,
+          headers,
+          body: JSON.stringify({ task: newTask })
+        };
+      } catch (error) {
+        return {
+          statusCode: 401,
+          headers,
+          body: JSON.stringify({ message: 'Invalid token' })
+        };
+      }
+    }
+
+    // UPDATE TASK
+    if (path.match(/\/tasks\/\d+/) && method === 'PUT') {
+      const authHeader = event.headers.authorization || event.headers.Authorization;
+      
+      if (!authHeader) {
+        return {
+          statusCode: 401,
+          headers,
+          body: JSON.stringify({ message: 'No token provided' })
+        };
+      }
+
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret-key');
+
+        const taskIdMatch = path.match(/\/tasks\/(\d+)/);
+        const taskId = parseInt(taskIdMatch[1]);
+        const { title, completed } = body;
+
+        const taskIndex = tasks.findIndex(t => t.id === taskId && t.user_id === decoded.userId);
+        if (taskIndex === -1) {
+          return {
+            statusCode: 404,
+            headers,
+            body: JSON.stringify({ message: 'Task not found' })
+          };
+        }
+
+        if (title !== undefined) tasks[taskIndex].title = title;
+        if (completed !== undefined) tasks[taskIndex].completed = completed;
+
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({ task: tasks[taskIndex] })
+        };
+      } catch (error) {
+        return {
+          statusCode: 401,
+          headers,
+          body: JSON.stringify({ message: 'Invalid token' })
+        };
+      }
+    }
+
+    // DELETE TASK
+    if (path.match(/\/tasks\/\d+/) && method === 'DELETE') {
+      const authHeader = event.headers.authorization || event.headers.Authorization;
+      
+      if (!authHeader) {
+        return {
+          statusCode: 401,
+          headers,
+          body: JSON.stringify({ message: 'No token provided' })
+        };
+      }
+
+      try {
+        const token = authHeader.replace('Bearer ', '');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret-key');
+
+        const taskIdMatch = path.match(/\/tasks\/(\d+)/);
+        const taskId = parseInt(taskIdMatch[1]);
         const taskIndex = tasks.findIndex(t => t.id === taskId && t.user_id === decoded.userId);
 
         if (taskIndex === -1) {
@@ -373,27 +325,14 @@ exports.handler = async (event, context) => {
       }
     }
 
-    // DEFAULT RESPONSE WITH DEBUG INFO
+    // Default response
     return {
       statusCode: 404,
       headers,
       body: JSON.stringify({
         message: 'Route not found',
-        debug: {
-          originalPath: event.path,
-          cleanPath: path,
-          method: method,
-          allUsers: users.map(u => ({ id: u.id, username: u.username, email: u.email })),
-          allTasks: tasks,
-          availableRoutes: [
-            'POST /register or /auth/register',
-            'POST /login or /auth/login',
-            'GET /tasks',
-            'POST /tasks',
-            'PUT /tasks/:id',
-            'DELETE /tasks/:id'
-          ]
-        }
+        requestedPath: path,
+        method: method
       })
     };
 
@@ -403,8 +342,7 @@ exports.handler = async (event, context) => {
       headers,
       body: JSON.stringify({
         message: 'Internal server error',
-        error: error.message,
-        stack: error.stack
+        error: error.message
       })
     };
   }

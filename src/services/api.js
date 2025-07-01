@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || '/.netlify/functions/debug';
+const API_BASE_URL = process.env.REACT_APP_API_URL || '/.netlify/functions/api';
 
 // Get token from localStorage
 const getToken = () => {
