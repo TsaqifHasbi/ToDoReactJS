@@ -51,15 +51,15 @@ exports.handler = async (event, context) => {
   try {
     // Parse path - handle multiple patterns
     let path = event.path || '';
-    
+
     // Log the original path for debugging
     console.log('ORIGINAL PATH:', event.path);
     console.log('QUERY PARAMS:', event.queryStringParameters);
     console.log('HTTP METHOD:', event.httpMethod);
-    
+
     path = path.replace('/.netlify/functions/api-simple', '');
     path = path.replace('/.netlify/functions/api', '');
-    
+
     // Handle /tasks path specifically
     if (path === '/tasks' || path.endsWith('/tasks')) {
       path = '/tasks';
@@ -68,9 +68,9 @@ exports.handler = async (event, context) => {
     } else if (path.startsWith('/auth/')) {
       path = path.replace('/auth', '');
     }
-    
+
     const method = event.httpMethod;
-    
+
     // Debug info
     console.log('DEBUG:', {
       originalPath: event.path,
@@ -96,7 +96,7 @@ exports.handler = async (event, context) => {
     // REGISTER
     if ((path === '/register' || path === '/auth/register' || path.endsWith('/register')) && method === 'POST') {
       const { username, email, password } = body;
-      
+
       if (!username || !email || !password) {
         return {
           statusCode: 400,
@@ -139,7 +139,7 @@ exports.handler = async (event, context) => {
     // LOGIN
     if ((path === '/login' || path === '/auth/login' || path.endsWith('/login')) && method === 'POST') {
       const { email, password } = body;
-      
+
       if (!email || !password) {
         return {
           statusCode: 400,
@@ -187,7 +187,7 @@ exports.handler = async (event, context) => {
     if (path === '/tasks' && method === 'GET') {
       const authHeader = event.headers.authorization || event.headers.Authorization;
       console.log('GET /tasks - Authorization header:', authHeader ? 'Present' : 'Missing');
-      
+
       if (!authHeader) {
         return {
           statusCode: 401,
@@ -200,10 +200,10 @@ exports.handler = async (event, context) => {
         const token = authHeader.replace('Bearer ', '');
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret-key');
         console.log('GET /tasks - Token decoded for user:', decoded.userId);
-        
+
         const userTasks = tasks.filter(t => t.user_id === decoded.userId).sort((a, b) => b.id - a.id);
         console.log('GET /tasks - Found tasks:', userTasks.length);
-        
+
         return {
           statusCode: 200,
           headers,
@@ -223,7 +223,7 @@ exports.handler = async (event, context) => {
     if (path === '/tasks' && method === 'POST') {
       const authHeader = event.headers.authorization || event.headers.Authorization;
       console.log('POST /tasks - Authorization header:', authHeader ? 'Present' : 'Missing');
-      
+
       if (!authHeader) {
         return {
           statusCode: 401,
@@ -236,7 +236,7 @@ exports.handler = async (event, context) => {
         const token = authHeader.replace('Bearer ', '');
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret-key');
         console.log('POST /tasks - Token decoded for user:', decoded.userId);
-        
+
         const { title } = body;
         if (!title) {
           return {
@@ -248,7 +248,7 @@ exports.handler = async (event, context) => {
 
         const newTask = createTask(decoded.userId, title);
         console.log('POST /tasks - Created task:', newTask);
-        
+
         return {
           statusCode: 201,
           headers,
@@ -278,7 +278,7 @@ exports.handler = async (event, context) => {
       try {
         const token = authHeader.replace('Bearer ', '');
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret-key');
-        
+
         const taskId = parseInt(path.split('/')[2]);
         const { title, completed } = body;
 
@@ -322,10 +322,10 @@ exports.handler = async (event, context) => {
       try {
         const token = authHeader.replace('Bearer ', '');
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret-key');
-        
+
         const taskId = parseInt(path.split('/')[2]);
         const taskIndex = tasks.findIndex(t => t.id === taskId && t.user_id === decoded.userId);
-        
+
         if (taskIndex === -1) {
           return {
             statusCode: 404,
@@ -335,7 +335,7 @@ exports.handler = async (event, context) => {
         }
 
         tasks.splice(taskIndex, 1);
-        
+
         return {
           statusCode: 200,
           headers,
