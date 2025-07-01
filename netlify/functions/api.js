@@ -19,12 +19,27 @@ let pool;
 // Initialize database connection
 const initDb = async () => {
   if (!pool) {
+    // Validate environment variables
+    if (!process.env.MYSQLHOST && !process.env.MYSQL_HOST) {
+      throw new Error('Database host not configured');
+    }
+    if (!process.env.MYSQLUSER && !process.env.MYSQL_USER) {
+      throw new Error('Database user not configured');
+    }
+    if (!process.env.MYSQLDATABASE && !process.env.MYSQL_DATABASE) {
+      throw new Error('Database name not configured');
+    }
+    
     pool = mysql.createPool(dbConfig);
     
-    // Create tables if they don't exist
+    // Test connection and create tables
     const connection = await pool.getConnection();
     
     try {
+      // Test connection
+      await connection.ping();
+      
+      // Create users table
       await connection.execute(`
         CREATE TABLE IF NOT EXISTS users (
           id INT AUTO_INCREMENT PRIMARY KEY,
@@ -35,6 +50,7 @@ const initDb = async () => {
         )
       `);
       
+      // Create tasks table
       await connection.execute(`
         CREATE TABLE IF NOT EXISTS tasks (
           id INT AUTO_INCREMENT PRIMARY KEY,
@@ -71,7 +87,25 @@ exports.handler = async (event, context) => {
   }
 
   try {
-    await initDb();
+    // Test database connection first
+    try {
+      await initDb();
+    } catch (dbError) {
+      return {
+        statusCode: 500,
+        headers,
+        body: JSON.stringify({ 
+          message: 'Database connection failed', 
+          error: dbError.message,
+          config: {
+            host: process.env.MYSQLHOST ? 'SET' : 'NOT SET',
+            user: process.env.MYSQLUSER ? 'SET' : 'NOT SET',
+            database: process.env.MYSQLDATABASE ? 'SET' : 'NOT SET',
+            port: process.env.MYSQLPORT ? 'SET' : 'NOT SET'
+          }
+        })
+      };
+    }
     
     const path = event.path.replace('/.netlify/functions/api', '');
     const method = event.httpMethod;
