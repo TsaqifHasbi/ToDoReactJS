@@ -150,8 +150,13 @@ exports.handler = async (event, context) => {
     await initDb();
     
     const originalPath = event.path;
-    const path = event.path.replace('/.netlify/functions/api', '');
+    let path = event.path.replace('/.netlify/functions/api', '');
     const method = event.httpMethod;
+    
+    // Handle different path patterns
+    if (path.startsWith('/auth/')) {
+      path = path.replace('/auth', '');
+    }
     
     // Debug logging
     console.log('Request details:', {
