@@ -60,13 +60,16 @@ exports.handler = async (event, context) => {
     path = path.replace('/.netlify/functions/api-simple', '');
     path = path.replace('/.netlify/functions/api', '');
 
-    // Handle /tasks path specifically
-    if (path === '/tasks' || path.endsWith('/tasks')) {
-      path = '/tasks';
-    } else if (path.startsWith('/tasks/')) {
-      // Keep task ID paths as-is
-    } else if (path.startsWith('/auth/')) {
+    // Handle /auth paths first
+    if (path.startsWith('/auth/')) {
       path = path.replace('/auth', '');
+    }
+    
+    // Handle /tasks path specifically - keep task ID paths intact
+    if (path === '/tasks') {
+      // Keep as /tasks
+    } else if (path.startsWith('/tasks/')) {
+      // Keep task ID paths as-is (e.g., /tasks/1, /tasks/2)
     }
 
     const method = event.httpMethod;
