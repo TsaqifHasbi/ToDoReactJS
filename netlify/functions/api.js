@@ -7,6 +7,21 @@ let tasks = [];
 let nextUserId = 1;
 let nextTaskId = 1;
 
+// Initialize with demo user
+const initializeDatabase = async () => {
+  if (users.length === 0) {
+    // Create demo user with bcrypt hashed password
+    const hashedPassword = await bcrypt.hash('password123', 10);
+    const demoUser = createUser('demo', 'tsaqifhasbi17@gmail.com', hashedPassword);
+    console.log('Demo user created:', { id: demoUser.id, email: demoUser.email, username: demoUser.username });
+    
+    // Create some demo tasks
+    createTask(demoUser.id, 'Welcome to TaskFlow!');
+    createTask(demoUser.id, 'Complete your first task');
+    console.log('Demo tasks created');
+  }
+};
+
 // Helper functions
 const findUserByEmail = (email) => users.find(u => u.email === email);
 const findUserByUsername = (username) => users.find(u => u.username === username);
@@ -36,6 +51,9 @@ const createTask = (userId, title) => {
 };
 
 exports.handler = async (event, context) => {
+  // Initialize database with demo user if empty
+  await initializeDatabase();
+  
   const headers = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
@@ -140,6 +158,9 @@ exports.handler = async (event, context) => {
     if ((path === '/login' || path === '/auth/login' || path.endsWith('/login')) && method === 'POST') {
       const { email, password } = body;
 
+      console.log('Login attempt:', { email, passwordProvided: !!password });
+      console.log('Available users:', users.map(u => ({ id: u.id, email: u.email, username: u.username })));
+
       if (!email || !password) {
         return {
           statusCode: 400,
@@ -150,19 +171,29 @@ exports.handler = async (event, context) => {
 
       const user = findUserByEmail(email);
       if (!user) {
+        console.log('User not found for email:', email);
         return {
           statusCode: 401,
           headers,
-          body: JSON.stringify({ message: 'Invalid credentials' })
+          body: JSON.stringify({ 
+            message: 'Invalid credentials. Demo user: tsaqifhasbi17@gmail.com / password123',
+            debug: {
+              availableUsers: users.map(u => u.email),
+              attemptedEmail: email
+            }
+          })
         };
       }
 
       const isValid = await bcrypt.compare(password, user.password);
+      console.log('Password validation result:', isValid);
       if (!isValid) {
         return {
           statusCode: 401,
           headers,
-          body: JSON.stringify({ message: 'Invalid credentials' })
+          body: JSON.stringify({ 
+            message: 'Invalid credentials. Demo user: tsaqifhasbi17@gmail.com / password123' 
+          })
         };
       }
 
