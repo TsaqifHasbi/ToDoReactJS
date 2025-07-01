@@ -149,8 +149,17 @@ exports.handler = async (event, context) => {
   try {
     await initDb();
     
+    const originalPath = event.path;
     const path = event.path.replace('/.netlify/functions/api', '');
     const method = event.httpMethod;
+    
+    // Debug logging
+    console.log('Request details:', {
+      originalPath,
+      cleanPath: path,
+      method,
+      headers: event.headers
+    });
     
     // Parse request body
     let body = {};
@@ -589,7 +598,24 @@ exports.handler = async (event, context) => {
     return {
       statusCode: 404,
       headers,
-      body: JSON.stringify({ message: 'Route not found' })
+      body: JSON.stringify({ 
+        message: 'Route not found',
+        debug: {
+          originalPath: event.path,
+          cleanPath: path,
+          method: method,
+          availableRoutes: [
+            'POST /register',
+            'POST /auth/register', 
+            'POST /login',
+            'POST /auth/login',
+            'GET /tasks',
+            'POST /tasks',
+            'PUT /tasks/:id',
+            'DELETE /tasks/:id'
+          ]
+        }
+      })
     };
 
   } catch (error) {
