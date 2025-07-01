@@ -55,17 +55,26 @@ function App() {
 
   const loadTasks = async () => {
     try {
+      console.log('Loading tasks...');
+      console.log('Token in localStorage:', localStorage.getItem('token'));
+      console.log('User in localStorage:', localStorage.getItem('user'));
+      console.log('Is authenticated:', authAPI.isAuthenticated());
+      
       const tasksData = await tasksAPI.getTasks();
+      console.log('Tasks API response:', tasksData);
+      
       // Convert API response to frontend format
       const formattedTasks = tasksData.map(task => ({
         id: task.id,
         text: task.title,
         completed: task.completed
       }));
+      console.log('Formatted tasks:', formattedTasks);
       setTasks(formattedTasks);
     } catch (error) {
       console.error('Error loading tasks:', error);
-      setError('Failed to load tasks');
+      console.error('Error details:', error.message);
+      setError('Failed to load tasks: ' + error.message);
     }
   };
 

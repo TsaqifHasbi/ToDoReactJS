@@ -35,6 +35,12 @@ const isAuthenticated = () => {
 // API request helper
 const apiRequest = async (endpoint, options = {}) => {
   const token = getToken();
+  console.log('API Request Debug:', {
+    endpoint,
+    token: token ? 'Present' : 'Missing',
+    tokenLength: token ? token.length : 0
+  });
+  
   const config = {
     headers: {
       'Content-Type': 'application/json',
@@ -43,8 +49,18 @@ const apiRequest = async (endpoint, options = {}) => {
     ...options,
   };
 
+  console.log('Request config:', {
+    url: `${API_BASE_URL}${endpoint}`,
+    method: config.method || 'GET',
+    headers: config.headers
+  });
+
   const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+  console.log('Response status:', response.status);
+  console.log('Response ok:', response.ok);
+  
   const data = await response.json();
+  console.log('Response data:', data);
 
   if (!response.ok) {
     throw new Error(data.message || 'Something went wrong');
