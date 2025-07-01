@@ -281,6 +281,8 @@ exports.handler = async (event, context) => {
     // UPDATE TASK
     if (path.startsWith('/tasks/') && method === 'PUT') {
       const authHeader = event.headers.authorization || event.headers.Authorization;
+      console.log('PUT /tasks - Authorization header:', authHeader ? 'Present' : 'Missing');
+      
       if (!authHeader) {
         return {
           statusCode: 401,
@@ -292,11 +294,18 @@ exports.handler = async (event, context) => {
       try {
         const token = authHeader.replace('Bearer ', '');
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default-secret-key');
+        console.log('PUT /tasks - Token decoded for user:', decoded.userId);
 
         const taskId = parseInt(path.split('/')[2]);
+        console.log('PUT /tasks - Task ID:', taskId);
+        console.log('PUT /tasks - Request body:', body);
+        
         const { title, completed } = body;
 
         const taskIndex = tasks.findIndex(t => t.id === taskId && t.user_id === decoded.userId);
+        console.log('PUT /tasks - Task index found:', taskIndex);
+        console.log('PUT /tasks - All tasks:', tasks);
+        
         if (taskIndex === -1) {
           return {
             statusCode: 404,
@@ -305,8 +314,10 @@ exports.handler = async (event, context) => {
           };
         }
 
+        console.log('PUT /tasks - Before update:', tasks[taskIndex]);
         if (title !== undefined) tasks[taskIndex].title = title;
         if (completed !== undefined) tasks[taskIndex].completed = completed;
+        console.log('PUT /tasks - After update:', tasks[taskIndex]);
 
         return {
           statusCode: 200,
@@ -314,10 +325,11 @@ exports.handler = async (event, context) => {
           body: JSON.stringify({ task: tasks[taskIndex] })
         };
       } catch (error) {
+        console.log('PUT /tasks - Token verification failed:', error.message);
         return {
           statusCode: 401,
           headers,
-          body: JSON.stringify({ message: 'Invalid token' })
+          body: JSON.stringify({ message: 'Invalid token', error: error.message })
         };
       }
     }

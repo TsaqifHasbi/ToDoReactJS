@@ -118,10 +118,14 @@ function App() {
 
   const toggleTask = async (taskId) => {
     try {
+      console.log('Toggling task:', taskId);
       const task = tasks.find(t => t.id === taskId);
+      console.log('Found task:', task);
+      
       const response = await tasksAPI.updateTask(taskId, { 
         completed: !task.completed 
       });
+      console.log('Update response:', response);
       
       setTasks(tasks.map(task => 
         task.id === taskId ? { 
@@ -131,7 +135,8 @@ function App() {
       ));
     } catch (error) {
       console.error('Error updating task:', error);
-      setError('Failed to update task');
+      console.error('Error details:', error.message);
+      setError('Failed to update task: ' + error.message);
     }
   };
 
